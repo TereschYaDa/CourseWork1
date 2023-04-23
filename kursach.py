@@ -13,8 +13,8 @@ class Product:
     def changePrice(self, percent): # заменить процент на долю, либо название, либо значение
         self.__price = self.__price * (1 - percent)
 
-    def __setPrice(self, value):
-	self.__price = float('{:.2f}'.format(float(value)))
+#    def __setPrice(self, value):
+#	    self.__price = float('{:.2f}'.format(float(value)))
 
 class Array: # переименовать в Store
     def __init__(self):
