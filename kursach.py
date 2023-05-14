@@ -1,30 +1,35 @@
 class Product:
-    def __init__(self, model, manufacturer, guarantee, price):
+    def __init__(self, storeId, model, manufacturer, guarantee, price):
+        self.__storeId = storeId
         self.__model = model
         self.__manufacturer = manufacturer
         self.__guarantee = guarantee
-        self.__price = price
+        self.__setPrice(price)
 
+    def __setPrice(self, value):
+        self.__price = float('{:.2f}'.format(float(value)))
+
+    def getStoreId(self): return self.__storeId
     def getModel(self): return self.__model
     def getManufacturer(self): return self.__manufacturer
     def getGuarantee(self): return self.__guarantee
-    def getPrice(self): return float('{:.2f}'.format(float(self.__price)))   # здесь должен быть просто возврат значения. вся конвертация должна производиться при присвоении значения
+    def getPrice(self): return self.__price
     
-    def changePrice(self, percent): # заменить процент на долю, либо название, либо значение
-        self.__price = self.__price * (1 - percent)
+    def changePrice(self, share):
+        self.__setPrice(self.__price * (1 - share))
 
-#    def __setPrice(self, value):
-#	    self.__price = float('{:.2f}'.format(float(value)))
-
-class Array: # переименовать в Store
+class Store:
     def __init__(self):
         self.__arr = []
         self._invalidateIterator()
+        self.__nextId = 0
 
     def _invalidateIterator(self):
         self.__i = -1
 
-    def add(self, product):
+    def add(self, model, manufacturer, guarantee, price):
+        product = Product(self.__nextId, model, manufacturer, guarantee, price)
+        self.__nextId += 1
         self.__arr.append(product)
         self._invalidateIterator()
     
@@ -45,60 +50,43 @@ class Array: # переименовать в Store
             return None
         
     def deleteElem(self, id):
-        flag = False # лучше использовать говорящее название: success, elemDeleted и т.п.
-        while flag == False:
-            if self.__i >= int(id): # сранивать надо с длиной внутреннего массива! внутренний счётчик тут не используется
-                self.__arr.pop(int(id))
-                self._invalidateIterator() # нужен, так как контейнер поменялся
-                flag = True
-            else: # Нельзя смешивать ввод с работой "потрохов". Цикл надо уносить наверх. while not store.deleteElem(...): ...
-                print('Неправильный ввод.')
-                id = input('Введите ID товара, который хотите удалить:\n')
-    
-    def sortArr(self, prop): # см. предыдущий метод + rename to sortBy
-        flag = True
-        while flag == True:
-            if prop == 'модель':
-                self.__arr.sort(key=lambda product: product.getModel())
-                flag = False
-            elif prop == 'производитель':
-                self.__arr.sort(key=lambda product: product.getManufacturer())
-                flag = False
-            elif prop == 'гарантия':
-                self.__arr.sort(key=lambda product: product.getGuarantee())
-                flag = False
-            elif prop == 'цена':
-                self.__arr.sort(key=lambda product: product.getPrice())
-                flag = False
-            else: 
-                print('Неправильный ввод.')
-                prop = input('Введите свойство товара из перечисленных: модель, производитель, гарантия, цена\n')
+        for i in range(self.getQuantity()):
+            if str(self.__arr[i].getStoreId()) == id:
+                self.__arr.pop(i)
+                self._invalidateIterator()
+                return True
+        return False
+             
+    def sortBy(self, prop):
+        if prop == 'модель':
+            self.__arr.sort(key=lambda product: product.getModel())
+            return True
+        elif prop == 'производитель':
+            self.__arr.sort(key=lambda product: product.getManufacturer())
+            return True
+        elif prop == 'гарантия':
+            self.__arr.sort(key=lambda product: product.getGuarantee())
+            return True
+        elif prop == 'цена':
+            self.__arr.sort(key=lambda product: product.getPrice())
+            return True
+        else: 
+            return False
 
-    def filterArr(self, manufacturer): # переименовать в filterByManufacturer
-        missed = 0
-        for i in range(len(self.__arr)): # getQuantity()
+    def filterByManufacturer(self, manufacturer):
+        filteredStore = Store()
+        for i in range(store.getQuantity):
             if manufacturer.lower() == self.__arr[i].getManufacturer().lower():
-                filteredStore.add(self.__arr[i]) # ужас ужасный. здесь нужна своя (локальная) переменная и возврат её из метода
-            else:
-                missed += 1
-        if missed == len(self.__arr): return False # а где return True?.. снести всё это нахер
-#	else: return True
-# or	
-#	return True
+                filteredStore.add(self.__arr[i])
+        return filteredStore
 
-    def changeAllPrice(self, percent): # rename to changeAllPrices
-        for i in range(len(self.__arr)): # getQuantity()
-            self.__arr[i].changePrice(percent)
-
-#	curIdx = self.__i
-#	elem = self.getFirstElem()
-#	while elem != None:
-#	    elem.changePrice(percent)
-#	    elem = self.getNextElem()
-#	self.__i = curIdx
-
-    def clearArr(self): # rename to clear()
-        self.__arr.clear() # invalidateIterator() !!!
+    def changeAllPrices(self, share):
+        curIdx = self.__i
+        elem = self.getFirstElem()
+        while elem != None:
+            elem.changePrice(share)
+            elem = self.getNextElem()
+        self.__i = curIdx
                     
 ###################################################################################
 '''Functions'''
@@ -110,18 +98,28 @@ def printSelectionMenu():
     print('2 - Добавление нового товара         5 - Фильтрация по производителю')
     print('3 - Удаление выбранного товара       6 - Преобразование цен')
 
-def returnPartStr(elemget, maxlen): # rename to AppendSpacesRight(str, targetLen)
-    return str(elemget) + ' ' * (abs(maxlen - len(str(elemget))) + 3) 
+def instantiation():
+    store.add('27EA63', 'LG', 12, 35000)
+    store.add('BTM2360', 'Philips', 6, 9000)
+    store.add('F1', 'Pocophone', 6, 23000)
+    store.add('Fen', 'Dyson', 10, 10000)
+    store.add('Ryzen 5 5600X', 'AMD', 18, 25000)
 
-def printAllObjProp(arr): # переименовать в printProductsTable
-    i = 0
-#   modelHeader = 'Модель:'
-#   maxLenModel = len(modelHeader)
-#   и далее везде вместо 'Модель:' -- modelHeader !!!
-    maxLenModel = 7
-    maxLenManufacturer = 14
-    maxLenGuarantee = 9
-    maxLenPrice = 5
+def AppendSpacesRight(string, targetLen): 
+    return str(string) + ' ' * (abs(targetLen - len(str(string))) + 3) 
+
+def printTableRow(id, model, maxLenModel, manufacturer, maxLenManufacturer, guarantee, maxLenGuarantee, price, maxLenPrice):
+    print(' ' + id + '  ' + AppendSpacesRight(model, maxLenModel) + AppendSpacesRight(manufacturer, maxLenManufacturer) + AppendSpacesRight(guarantee, maxLenGuarantee) + AppendSpacesRight(price, maxLenPrice))
+
+def printProductsTable(arr):
+    modelHeader = 'Модель:'
+    manufacturerHeader = 'Производитель:'
+    guaranteeHeader = 'Гарантия:'
+    priceHeader = 'Цена:'
+    maxLenModel = len(modelHeader) + 1
+    maxLenManufacturer = len(manufacturerHeader) + 1
+    maxLenGuarantee = len(guaranteeHeader) + 1
+    maxLenPrice = len(priceHeader) + 1
     elem = arr.getFirstElem()
     while elem != None:
         if maxLenModel < len(elem.getModel()): maxLenModel = len(elem.getModel())
@@ -130,13 +128,19 @@ def printAllObjProp(arr): # переименовать в printProductsTable
         if maxLenPrice < len(str(elem.getPrice())): maxLenPrice = len(str(elem.getPrice()))
         elem = arr.getNextElem()
 
-#   этот принт лучше загнать в функцию printTableRow(id, model, ...)
-    print('ID:' + ' ' + returnPartStr('Модель:', maxLenModel) + returnPartStr('Производитель:', maxLenManufacturer) + returnPartStr('Гарантия:', maxLenGuarantee) + returnPartStr('Цена:', maxLenPrice))
+    printTableRow('ID:',
+                    modelHeader, maxLenModel,
+                    manufacturerHeader, maxLenManufacturer,
+                    guaranteeHeader, maxLenGuarantee,
+                    priceHeader, maxLenPrice)
     elem = arr.getFirstElem()
     while elem != None:
-        print(' ' + str(i) + '  ' + returnPartStr(elem.getModel(), maxLenModel) + returnPartStr(elem.getManufacturer(), maxLenManufacturer) + returnPartStr(elem.getGuarantee(), maxLenGuarantee) + returnPartStr(elem.getPrice(), maxLenPrice))
+        printTableRow(elem.getStoreId(),
+                      elem.getModel(), maxLenModel,
+                      elem.getManufacturer(), maxLenManufacturer,
+                      elem.getGuarantee(), maxLenGuarantee,
+                      elem.getPrice(), maxLenPrice)
         elem = arr.getNextElem()
-        i += 1 # нельзя ни в коем случае! идентификаторы должны возвращаться из Store, а не считаться снаружи
     print()
 
 def processAddProduct():
@@ -160,30 +164,33 @@ def processAddProduct():
                 price = input('Введите цену:\n')
             else: f = True
         
-        product = Product(model, manufacturer, guarantee, price)
-        store.add(product)
+        store.add(model, manufacturer, guarantee, price)
     
 def processDeleteProduct():
     responseForDelete = input('Введите ID товара, который хотите удалить:\n')
-    store.deleteElem(responseForDelete)
+    while store.deleteElem(responseForDelete) != True:
+        print('Неправильный ввод.')
+        responseForDelete = input('Введите ID товара, который хотите удалить:\n')
 
 def processSort():
     prop = input('Введите свойство товара, по которому хотите осуществить сортировку (модель, производитель, гарантия, цена):\n')
-    store.sortArr(prop.lower())
+    while store.sortBy(prop.lower()) != True:
+        print('Неправильный ввод.')
+        prop = input('Введите свойство товара, по которому хотите осуществить сортировку (модель, производитель, гарантия, цена):\n')
 
 def processFilt():
     manufacturer = input('Введите производителя товара, по которому хотите осуществить фильрацию:\n')
-    if store.filterArr(manufacturer) == False:
+    if not store.filterByManufacturer(manufacturer):
         print('Товары производителя ' + manufacturer + ' отсутствуют\n')
     else:
-        printAllObjProp(filteredStore)
+        printProductsTable(store.filterByManufacturer(manufacturer))
 
 def processChangePrice():
-    percent = input('Введите процент, на который хотите снизить цену всех товаров:\n')
-    if percent.isdigit():
-        percent = int(percent)
-        percent /= 100
-        store.changeAllPrice(percent)
+    share = input('Введите процент, на который хотите снизить цену всех товаров:\n')
+    if share.isdigit():
+        share = int(share)
+        share /= 100
+        store.changeAllPrices(share)
     else:
         print('Неправильный ввод.')
         processChangePrice()
@@ -191,21 +198,8 @@ def processChangePrice():
 ###################################################################################
 '''Executing code'''
 
-store = Array()
-filteredStore = Array() # already noted
-# better move to function Init()
-choto0 = Product('27EA63', 'LG', 12, 35000)
-choto1 = Product('BTM2360', 'Philips', 6, 9000)
-choto2 = Product('F1', 'Pocophone', 6, 23000)
-choto3 = Product('Fen', 'Dyson', 10, 10000)
-choto4 = Product('Ryzen 5 5600X', 'AMD', 18, 25000)
-store.add(choto0)
-store.add(choto1)
-store.add(choto2)
-store.add(choto3)
-store.add(choto4)
-# store.add(Product(...))
-
+store = Store()
+instantiation()
 responseForMenu = ''
 print('Вас приветствует приложение "Магазин бытовой техники"\n')
 while responseForMenu != '0':
@@ -213,17 +207,16 @@ while responseForMenu != '0':
     responseForMenu = input()
     if responseForMenu == '1':
         if store.getQuantity() > 0:
-            printAllObjProp(store)
+            printProductsTable(store)
         else:
             print('Нет товаров')
     elif responseForMenu == '2': processAddProduct()
     elif responseForMenu == '3':
-        printAllObjProp(store)
+        printProductsTable(store)
         processDeleteProduct()
     elif responseForMenu == '4': processSort()
     elif responseForMenu == '5':
         processFilt()
-        filteredStore.clearArr()
     elif responseForMenu == '6': processChangePrice()
     elif responseForMenu == '0': print('До свидания!')
     else: print('Вероятно, ввод был выполнен неправильно. Попробуйте еще раз:')
