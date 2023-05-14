@@ -7,7 +7,7 @@ class Product:
         self.__setPrice(price)
 
     def __setPrice(self, value):
-        self.__price = float('{:.2f}'.format(float(value)))
+        self.__price = float('{:.2f}'.format(float(value)))    # better have decimal cents here and convert to .2f during printing out
 
     def getStoreId(self): return self.__storeId
     def getModel(self): return self.__model
@@ -15,7 +15,7 @@ class Product:
     def getGuarantee(self): return self.__guarantee
     def getPrice(self): return self.__price
     
-    def changePrice(self, share):
+    def changePrice(self, share):     # rename to dicount
         self.__setPrice(self.__price * (1 - share))
 
 class Store:
@@ -29,8 +29,8 @@ class Store:
 
     def add(self, model, manufacturer, guarantee, price):
         product = Product(self.__nextId, model, manufacturer, guarantee, price)
-        self.__nextId += 1
         self.__arr.append(product)
+        self.__nextId += 1
         self._invalidateIterator()
     
     def getQuantity(self): return len(self.__arr)
@@ -75,12 +75,12 @@ class Store:
 
     def filterByManufacturer(self, manufacturer):
         filteredStore = Store()
-        for i in range(store.getQuantity):
+        for i in range(store.getQuantity): # ???
             if manufacturer.lower() == self.__arr[i].getManufacturer().lower():
                 filteredStore.add(self.__arr[i])
         return filteredStore
 
-    def changeAllPrices(self, share):
+    def changeAllPrices(self, share): # rename to discountAll
         curIdx = self.__i
         elem = self.getFirstElem()
         while elem != None:
@@ -98,7 +98,7 @@ def printSelectionMenu():
     print('2 - Добавление нового товара         5 - Фильтрация по производителю')
     print('3 - Удаление выбранного товара       6 - Преобразование цен')
 
-def instantiation():
+def instantiation(): # Using of global variables is making yourself cry sooner or later. Refactor to passing 'store' as a function parameter.
     store.add('27EA63', 'LG', 12, 35000)
     store.add('BTM2360', 'Philips', 6, 9000)
     store.add('F1', 'Pocophone', 6, 23000)
@@ -109,7 +109,11 @@ def AppendSpacesRight(string, targetLen):
     return str(string) + ' ' * (abs(targetLen - len(str(string))) + 3) 
 
 def printTableRow(id, model, maxLenModel, manufacturer, maxLenManufacturer, guarantee, maxLenGuarantee, price, maxLenPrice):
-    print(' ' + id + '  ' + AppendSpacesRight(model, maxLenModel) + AppendSpacesRight(manufacturer, maxLenManufacturer) + AppendSpacesRight(guarantee, maxLenGuarantee) + AppendSpacesRight(price, maxLenPrice))
+    print(' ' + id + '  ' + # use the same design pattern as for rest paramters: maxLen & AppendSpaces
+          AppendSpacesRight(model, maxLenModel) +
+          AppendSpacesRight(manufacturer, maxLenManufacturer) +
+          AppendSpacesRight(guarantee, maxLenGuarantee) +
+          AppendSpacesRight(price, maxLenPrice))
 
 def printProductsTable(arr):
     modelHeader = 'Модель:'
@@ -144,35 +148,36 @@ def printProductsTable(arr):
     print()
 
 def processAddProduct():
-    if store.getQuantity() == 12:
+    if store.getQuantity() == 12: # Better move this constraint to parameter of Store class (passing to contsructor during creation). Explicit '12' should go to global constant to be used both here and in createStore().
+	# Don't use explicit '12' in text
         print('В программе не может содержаться больше 12 товаров!\nЧтобы добавить новый товар, сначала удалите уже имеющийся. Ну или попросите программиста, ответсвенного за выполнение этого задания, чтобы не делал таких дурацких ограничеений :-D')
     else:
         model = input('Введите название модели:\n')
         manufacturer = input('Введите название производителя:\n')
-        guarantee = input('Введите время гарантии(в месяцах):\n')
-        f = False
-        while f == False:
-            if guarantee.isdigit() == False:
-                print('Введены некорректные данные. Попробуйте еще раз.')
-                guarantee = input('Введите время гарантии(в месяцах):\n')
-            else: f = True
-        price = input('Введите цену:\n')
-        f = False
-        while f == False:
-            if price.isdigit() == False:
-                print('Введены некорректные данные. Попробуйте еще раз.')
-                price = input('Введите цену:\n')
-            else: f = True
+	
+	correct = False
+	while not correct:
+		guarantee = input('Введите время гарантии(в месяцах):\n')
+		if guarantee.isdigit() == True: correct = True
+		else: print('Введены некорректные данные. Попробуйте еще раз.')
+
+	correct = False
+	while not correct:
+	        price = input('Введите цену:\n')
+		if price.isdigit() == True: correct = True
+		else: print('Введены некорректные данные. Попробуйте еще раз.')
         
         store.add(model, manufacturer, guarantee, price)
     
 def processDeleteProduct():
+	# refactor same as in processAddProduct()
     responseForDelete = input('Введите ID товара, который хотите удалить:\n')
     while store.deleteElem(responseForDelete) != True:
         print('Неправильный ввод.')
         responseForDelete = input('Введите ID товара, который хотите удалить:\n')
 
 def processSort():
+	# refactor same as in processAddProduct()
     prop = input('Введите свойство товара, по которому хотите осуществить сортировку (модель, производитель, гарантия, цена):\n')
     while store.sortBy(prop.lower()) != True:
         print('Неправильный ввод.')
@@ -180,7 +185,7 @@ def processSort():
 
 def processFilt():
     manufacturer = input('Введите производителя товара, по которому хотите осуществить фильрацию:\n')
-    if not store.filterByManufacturer(manufacturer):
+    if not store.filterByManufacturer(manufacturer): # double fitering, really?!
         print('Товары производителя ' + manufacturer + ' отсутствуют\n')
     else:
         printProductsTable(store.filterByManufacturer(manufacturer))
@@ -198,26 +203,26 @@ def processChangePrice():
 ###################################################################################
 '''Executing code'''
 
-store = Store()
-instantiation()
+store = Store() # move creation to init, making smth like store = createStore()
+instantiation() # rename to createStore()
 responseForMenu = ''
 print('Вас приветствует приложение "Магазин бытовой техники"\n')
 while responseForMenu != '0':
-    printSelectionMenu()
-    responseForMenu = input()
+    printSelectionMenu() # better include asking for input into printSelectionMenu() (and thus rename function to smth like processMainMenu)
+    responseForMenu = input() # see above, goes to responseForMenu = processMainMenu()
     if responseForMenu == '1':
         if store.getQuantity() > 0:
             printProductsTable(store)
         else:
             print('Нет товаров')
-    elif responseForMenu == '2': processAddProduct()
+    elif responseForMenu == '2': processAddProduct() # rename to processAddProductMenu
     elif responseForMenu == '3':
         printProductsTable(store)
-        processDeleteProduct()
-    elif responseForMenu == '4': processSort()
+        processDeleteProduct() # same, add ...Menu
+    elif responseForMenu == '4': processSort() # same, add ...Menu
     elif responseForMenu == '5':
-        processFilt()
-    elif responseForMenu == '6': processChangePrice()
+        processFilt()  # rename to processFilterProductsMenu
+    elif responseForMenu == '6': processChangePrice()  # rename to processDiscountProductsMenu
     elif responseForMenu == '0': print('До свидания!')
     else: print('Вероятно, ввод был выполнен неправильно. Попробуйте еще раз:')
     
