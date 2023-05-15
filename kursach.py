@@ -7,7 +7,7 @@ class Product:
         self.__setPrice(price)
 
     def __setPrice(self, value):
-        self.__price = float('{:.2f}'.format(float(value)))    # better have decimal cents here and convert to .2f during printing out
+        self.__price = float(int(value * 100 + 0.5)) / 100 # округляем до 2 знаков после запятой // float('%.2f' % float(value))
 
     def getStoreId(self): return self.__storeId
     def getModel(self): return self.__model
@@ -120,7 +120,7 @@ def printTableRow(id, maxLenId, model, maxLenModel, manufacturer, maxLenManufact
           AppendSpacesRight(model, maxLenModel) +
           AppendSpacesRight(manufacturer, maxLenManufacturer) +
           AppendSpacesRight(guarantee, maxLenGuarantee) +
-          AppendSpacesRight(price, maxLenPrice))
+          AppendSpacesRight(price if isinstance(price, str) else "%.2f" % price, maxLenPrice))
 
 def printProductsTable(arr):
     idHeader = "ID:"
@@ -159,7 +159,7 @@ def printProductsTable(arr):
 
 def processAddProductMenu():
     if store.getQuantity() == store.getSize():
-        print('В программе не может содержаться больше '+ store.getSize +' товаров!\nЧтобы добавить новый товар, сначала удалите уже имеющийся. Ну или попросите программиста, ответсвенного за выполнение этого задания, чтобы не делал таких дурацких ограничеений :-D')
+        print('В программе не может содержаться больше '+ str(store.getSize()) +' товаров!\nЧтобы добавить новый товар, сначала удалите уже имеющийся. Ну или попросите программиста, ответсвенного за выполнение этого задания, чтобы не делал таких дурацких ограничеений :-D')
     else:
         model = input('Введите название модели:\n')
         manufacturer = input('Введите название производителя:\n')
